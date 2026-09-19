@@ -1,6 +1,6 @@
 import logging
 import os
-
+import rioxarray as rio
 import planetary_computer as pc
 from odc.stac import stac_load
 
@@ -37,7 +37,11 @@ def acquire_s2_pc(bbox,
     signed_items = [pc.sign(item) for item in items]
     ds = stac_load(signed_items, groupby='id', **kwargs)
     ds = ds.rio.write_crs(f"epsg:{proj_epsg}", inplace=True)
-    zarr_path = save_xarray(ds, save_dir, basename, 'zarr')
+    if kwargs.get("encoding", None):
+        kwargs["encoding"] = {var: {"chunks": (kwargs["chunks"]["x"], kwargs["chunks"]["y"])} 
+                                    for var in ds.data_vars 
+                                    if "x" in ds[var].dims and "y" in ds[var].dims}
+    zarr_path = save_xarray(ds, save_dir, basename, 'zarr', **kwargs)
     logger.info(f'Finished {items}')
     for key in added_keys:
         kwargs.pop(key)
