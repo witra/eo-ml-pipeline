@@ -37,7 +37,7 @@ def acquire_s2_pc(bbox,
     signed_items = [pc.sign(item) for item in items]
     ds = stac_load(signed_items, groupby='id', **kwargs)
     ds = ds.rio.write_crs(f"epsg:{proj_epsg}", inplace=True)
-    if kwargs.get("encoding", None):
+    if kwargs.get("chunks", None) and not kwargs.get("encoding", None):
         kwargs["encoding"] = {var: {"chunks": (kwargs["chunks"]["x"], kwargs["chunks"]["y"])} 
                                     for var in ds.data_vars 
                                     if "x" in ds[var].dims and "y" in ds[var].dims}
