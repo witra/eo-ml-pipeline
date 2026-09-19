@@ -1,13 +1,45 @@
+import datetime
 import logging
 import os
+from datetime import datetime, timedelta
 
 import geopandas as gpd
+import pystac
 import pystac_client
 
 from eo_pipeline.utils.geom import bbox_to_epsg
 
 logger = logging.getLogger(__name__)
 
+def temporal_sample_item(items:list[pystac.Item], 
+                         start:datetime, 
+                         end:datetime, 
+                         interval_day:int=7,
+                         sampling_fn=None # TODO: come up with a better sampling method
+                         ):
+    selected = []
+    current = start
+    while current < end:
+        window_end = current + timedelta(days=interval_day)
+        candidates = [
+            item
+            for item in items 
+            if current <= item.datetime < window_end
+        ]
+
+        if len(candidates) > 0:
+            if sampling_fn:
+                sampled = sampling_fn(candidates)
+            else:
+                sampled = candidates[0]
+
+            selected.append(sampled)
+            
+        current = window_end
+    return selected
+
+
+     
 def search_s2(catalog="https://planetarycomputer.microsoft.com/api/stac/v1",
               collection="sentinel-2-l2a",
               save_dir=None, 
