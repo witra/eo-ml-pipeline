@@ -28,18 +28,15 @@ def base_pipeline(y_dir, xkwargs, record:str | dict | None=None, max_retries=3):
     if isinstance(record, str):
         with open("records", "r") as f:
             record = json.load(f)
-    elif isinstance(record, dict):
-        record = record
     else:
-        logger.warning("rocord is not avaialbale/recognised. Initialized instead")
         record = {}
             
     y_paths = glob(os.path.join(y_dir, "*.tif"), recursive=True)
     logger.info(f"There are {len(y_paths)} tif files found")
-    record = {}
+    
     for x_name, kwargs in xkwargs.items():
         preprocessed_paths = []
-        record[x_name] = []
+        record[x_name] = record.get(x_name, [])
         failed_items_dict = {}
         for y_path in tqdm(y_paths[:2]):
             # Setup
@@ -47,6 +44,7 @@ def base_pipeline(y_dir, xkwargs, record:str | dict | None=None, max_retries=3):
             basename = os.path.basename(y_path).split('.')[0].split('_')[1:]
             basename = "_".join(basename)
             if basename  in record[x_name]:
+                logger.info(f'skip {basename}')
                 continue
             kwargs['basename'] = basename 
             logger.info(f"process data for {basename}")
@@ -100,18 +98,19 @@ def base_pipeline(y_dir, xkwargs, record:str | dict | None=None, max_retries=3):
             ds, _ = construct_xy(x_ds, y_path, **kwargs)
             record[x_name].append(basename)
             failed_items_dict[basename] = failed_items
+            with open(os.path.join(f"{kwargs['save_dir']}", f"{x_name}_failed_records.json"), "w") as f:
+                    json.dump(failed_items_dict, f, indent=4)
+            
             del ds
             # break
-
-        with open(os.path.join(f"{kwargs['save_dir']}", f"{x_name}_succes_records.json"), "w") as f:
-            json.dump(record[x_name], f, indent=4)
-        with open(os.path.join(f"{kwargs['save_dir']}", f"{x_name}_failed_records.json"), "w") as f:
-            json.dump(failed_items_dict, f, indent=4)
         
         # cal global stat to each satellite data
         kwargs['outpath'] = os.path.join(kwargs["save_dir"], f'{x_name}_mean_std.json')
         calculate_mean_std(preprocessed_paths, kwargs["bands"][1:], **kwargs)
 
+    with open(os.path.join(f"{kwargs['save_dir']}", "succes_records.json"), "w") as f:
+        json.dump(record, f, indent=4)
+    
 if __name__ == '__main__':
     xkwargs = {
         "S2":{
