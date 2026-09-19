@@ -5,7 +5,8 @@ logger = logging.getLogger(__name__)
 def save_xarray(ds, save_dir, filename, save_format='zarr', **kwargs):
     if save_format == 'zarr':
         path = f'{save_dir}/{filename}.zarr'
-        ds.to_zarr(path, mode="w", consolidated=False, zarr_format=3)
+        encoding = kwargs.get("encoding", None)
+        ds.to_zarr(path, mode="w", consolidated=False, zarr_format=3, encoding=encoding)
         return path
     elif save_format == 'tif':
         path = f'{save_dir}/{filename}.tif'
