@@ -21,3 +21,6 @@ dependencies = [
 dev = [
     "pytest-cov>=7.1.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eo_ml_pipeline"]
