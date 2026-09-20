@@ -16,13 +16,36 @@ def construct_xy(x:str|Path|xr.Dataset,
                  is_save_tif=False, 
                  save_dir="./", 
                  **kwargs):
-    """ 
-    x: "file.zarr"
-    y: "file.tif"
+
+    """
+    Construct and save a spatially aligned X/Y dataset.
+
+    Parameters
+    ----------
+    x : str, Path, or xr.Dataset
+        Input feature dataset. Paths are expected to point to Zarr data.
+    y : str, Path, or xr.DataArray
+        Input label data. Paths are expected to point to raster data.
+    pad : int, default=3
+        Number of pixels removed from each spatial edge after alignment.
+    chunks : dict, optional
+        Chunk sizes for the resulting dataset. Defaults to 256x256.
+    is_save_tif : bool, default=False
+        Whether to additionally save the merged dataset as GeoTIFF.
+    save_dir : str, default="./"
+        Output directory.
+    **kwargs
+        Additional arguments passed to ``save_xarray``. Must include
+        ``nodata`` for the label data.
+
+    Returns
+    -------
+    tuple[xr.Dataset, str]
+        The merged dataset and path to the saved Zarr dataset.
     """
     if chunks is None:
         chunks = {"x": 256, "y": 256}
-    if isinstance(x, (str|Path)):
+    if isinstance(x, (str, Path)):
         x_ds = xr.open_zarr(x)
     elif isinstance(x, xr.Dataset):
         x_ds = x
@@ -32,7 +55,7 @@ def construct_xy(x:str|Path|xr.Dataset,
     if isinstance(y, (str|Path)):
         y_da = rxr.open_rasterio(y)
         basename = kwargs.get('basename', os.path.basename(y).split(".")[0])
-    elif isinstance(x, xr.DataArray):
+    elif isinstance(y, xr.DataArray):
         y_da = y
         basename = kwargs.get('basename', 'xy_pair')
     else:
