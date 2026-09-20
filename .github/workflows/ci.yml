@@ -30,6 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync --dev
+          uv run python -c "import eo_ml_pipeline; print(eo_ml_pipeline.__file__)"
           sudo apt-get update && sudo apt-get install -y jq
 
       # 4. Run tests with coverage
