@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-from eo_pipeline.utils.io import save_xarray
+from eo_ml_pipeline.utils.io import save_xarray
 
 
 def test_save_xarray(tmp_path):

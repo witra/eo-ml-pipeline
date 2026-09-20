@@ -1,6 +1,6 @@
 import pytest
 
-from eo_pipeline.utils.time import buffer_date
+from eo_ml_pipeline.utils.time import buffer_date
 
 @pytest.mark.parametrize(
     ("date", "buffer", "mode", "expected"),

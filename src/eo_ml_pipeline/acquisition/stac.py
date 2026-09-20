@@ -4,9 +4,9 @@ import rioxarray as rio
 import planetary_computer as pc
 from odc.stac import stac_load
 
-from eo_pipeline.utils.geom import bbox_to_epsg
-from eo_pipeline.utils.io import save_xarray
-from eo_pipeline.utils.path import delete_path
+from eo_ml_pipeline.utils.geom import bbox_to_epsg
+from eo_ml_pipeline.utils.io import save_xarray
+from eo_ml_pipeline.utils.path import delete_path
 
 logger = logging.getLogger(__name__)
 

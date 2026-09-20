@@ -7,7 +7,7 @@ import geopandas as gpd
 import pystac
 import pystac_client
 
-from eo_pipeline.utils.geom import bbox_to_epsg
+from eo_ml_pipeline.utils.geom import bbox_to_epsg
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ from datetime import datetime
 import pystac
 import numpy as np
 
-from eo_pipeline.acquisition.stac import acquire_s2_pc, acquire_items
+from eo_ml_pipeline.acquisition.stac import acquire_s2_pc, acquire_items
 
 def make_item(dt):
     """Create a minimal STAC item for testing."""
@@ -36,19 +36,19 @@ def test_acquire_s2_pc(monkeypatch, tmp_path):
     )
 
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.pc.sign",
+        "eo_ml_pipeline.acquisition.stac.pc.sign",
         lambda item: item,
     )
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.stac_load",
+        "eo_ml_pipeline.acquisition.stac.stac_load",
         lambda items, **kwargs: ds,
     )
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.bbox_to_epsg",
+        "eo_ml_pipeline.acquisition.stac.bbox_to_epsg",
         lambda *bbox: 32633,
     )
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.save_xarray",
+        "eo_ml_pipeline.acquisition.stac.save_xarray",
         lambda ds, save_dir, basename, save_format, **kwargs:
             str(tmp_path / f"{basename}.{save_format}"),
     )
@@ -87,19 +87,19 @@ def test_acquire_s2_pc_chunks_to_encoding(monkeypatch, tmp_path):
         return str(tmp_path/"test.zarr")
 
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.pc.sign",
+        "eo_ml_pipeline.acquisition.stac.pc.sign",
         lambda item: item,
     )
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.stac_load",
+        "eo_ml_pipeline.acquisition.stac.stac_load",
         mock_stac_load,
     )
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.bbox_to_epsg",
+        "eo_ml_pipeline.acquisition.stac.bbox_to_epsg",
         lambda *bbox: 32633,
     )
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.save_xarray",
+        "eo_ml_pipeline.acquisition.stac.save_xarray",
         mock_save_xarray,
     )
 
@@ -118,7 +118,7 @@ def test_acquire_items_s2(monkeypatch):
     expected = ("dataset", "test.zarr")
 
     monkeypatch.setattr(
-        "eo_pipeline.acquisition.stac.acquire_s2_pc",
+        "eo_ml_pipeline.acquisition.stac.acquire_s2_pc",
         lambda **kwargs: expected,
     )
 

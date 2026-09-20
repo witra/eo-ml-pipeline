@@ -1,4 +1,4 @@
-from eo_pipeline.utils.path import delete_path
+from eo_ml_pipeline.utils.path import delete_path
 
 def test_delete_path(tmp_path):
     """Delete files and directories."""

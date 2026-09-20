@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from eo_pipeline.utils.stats import calculate_mean_std
+from eo_ml_pipeline.utils.stats import calculate_mean_std
 
 @pytest.fixture
 def zarr_datasets(tmp_path):

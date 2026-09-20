@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pystac
 import pytest
 
-from eo_pipeline.discovery.stac import search_items, search_s2, temporal_sample_item
+from eo_ml_pipeline.discovery.stac import search_items, search_s2, temporal_sample_item
 
 
 def make_item(dt):
@@ -103,11 +103,11 @@ def test_search_s2(monkeypatch, tmp_path):
             return MockSearch()
 
     monkeypatch.setattr(
-        "eo_pipeline.discovery.stac.pystac_client.Client.open",
+        "eo_ml_pipeline.discovery.stac.pystac_client.Client.open",
         lambda catalog: MockCatalog(),
     )
     monkeypatch.setattr(
-        "eo_pipeline.discovery.stac.bbox_to_epsg",
+        "eo_ml_pipeline.discovery.stac.bbox_to_epsg",
         lambda *bbox: 32633,
     )
 
@@ -130,7 +130,7 @@ def test_search_items_s2(monkeypatch):
     expected = ["item"]
 
     monkeypatch.setattr(
-        "eo_pipeline.discovery.stac.search_s2",
+        "eo_ml_pipeline.discovery.stac.search_s2",
         lambda **kwargs: expected,
     )
 

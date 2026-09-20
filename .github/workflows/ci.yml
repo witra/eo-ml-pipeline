@@ -30,13 +30,14 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync --dev
+          uv run python -c "import eo_ml_pipeline; print(eo_ml_pipeline.__file__)"
           sudo apt-get update && sudo apt-get install -y jq
 
       # 4. Run tests with coverage
       - name: Run tests with coverage
         run: |
           uv run pytest \
-            --cov=eo_pipeline \
+            --cov=eo_ml_pipeline \
             --cov-report=xml \
             --cov-report=term-missing
       # 5. Check diff coverage
