@@ -1,3 +1,14 @@
+exploration/
+examples/dataset/
+.DS*
+data/
+airflow/dags/__pycache__/
+airflow/logs/
+airflow/*.cfg
+airflow/*.db*
+airflow/*.json*
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
