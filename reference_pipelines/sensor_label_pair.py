@@ -7,12 +7,12 @@ from glob import glob
 import xarray as xr
 from tqdm import tqdm
 
-from eo_pipeline.acquisition.stac import acquire_items
-from eo_pipeline.dataset.base import construct_xy
-from eo_pipeline.discovery.stac import search_items
-from eo_pipeline.processing.preprocessing import apply_preprocessing
-from eo_pipeline.utils.geom import get_bbox_from_tif
-from eo_pipeline.utils.stats import calculate_mean_std
+from eo_ml_pipeline.acquisition.stac import acquire_items
+from eo_ml_pipeline.dataset.base import construct_xy
+from eo_ml_pipeline.discovery.stac import search_items
+from eo_ml_pipeline.processing.preprocessing import apply_preprocessing
+from eo_ml_pipeline.utils.geom import get_bbox_from_tif
+from eo_ml_pipeline.utils.stats import calculate_mean_std
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,7 +38,7 @@ def base_pipeline(y_dir, xkwargs, record:str | dict | None=None, max_retries=3):
         preprocessed_paths = []
         record[x_name] = record.get(x_name, [])
         failed_items_dict = {}
-        for y_path in tqdm(y_paths[:2]):
+        for y_path in tqdm(y_paths):
             # Setup
             # Assumption: each basename has prefix at the first word
             basename = os.path.basename(y_path).split('.')[0].split('_')[1:]
@@ -102,7 +102,6 @@ def base_pipeline(y_dir, xkwargs, record:str | dict | None=None, max_retries=3):
                     json.dump(failed_items_dict, f, indent=4)
             
             del ds
-            # break
         
         # cal global stat to each satellite data
         kwargs['outpath'] = os.path.join(kwargs["save_dir"], f'{x_name}_mean_std.json')
@@ -132,5 +131,5 @@ if __name__ == '__main__':
             "save_preprocessed": True,
             }
     }
-    y_dir = '../../ModularGeoFM_dataprep/dataset/AI4LCC_CNRS/GE/GT/line_filled'
+    y_dir = '../data/labels/'
     base_pipeline(y_dir, xkwargs)

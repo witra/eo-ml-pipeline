@@ -69,7 +69,7 @@ def construct_xy(x:str|Path|xr.Dataset,
     y_da = y_da.rio.write_nodata(kwargs['nodata'])
     merged_ds = xr.merge([x_ds, y_da])
     merged_ds = merged_ds.isel(y=slice(pad, -pad), x=slice(pad, -pad))
-    merged_ds = merged_ds.chunk(chunks)
+    merged_ds = merged_ds.chunk({"x": chunks["x"], "y": chunks["y"]})
     zarr_path = save_xarray(merged_ds, save_dir, basename, 'zarr', **kwargs)
     if is_save_tif:
         save_xarray(merged_ds, save_dir, basename, 'tif', nodata=kwargs['nodata'])
