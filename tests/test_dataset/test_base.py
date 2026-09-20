@@ -1,7 +1,7 @@
 import xarray as xr
 import numpy as np
 
-from eo_pipeline.dataset.base import construct_xy
+from eo_ml_pipeline.dataset.base import construct_xy
 
 def test_construct_xy(tmp_path, monkeypatch):
     """Construct and save an aligned X/Y dataset."""
@@ -18,7 +18,7 @@ def test_construct_xy(tmp_path, monkeypatch):
     ).rio.write_crs("EPSG:4326")
 
     monkeypatch.setattr(
-        "eo_pipeline.utils.io.save_xarray",
+        "eo_ml_pipeline.utils.io.save_xarray",
         lambda ds, save_dir, basename, save_format, **kwargs:
             str(tmp_path / f"{basename}.{save_format}"),
     )

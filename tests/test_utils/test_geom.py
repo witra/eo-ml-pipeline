@@ -2,7 +2,7 @@ import numpy as np
 import rasterio
 from rasterio.transform import from_origin
 
-from eo_pipeline.utils.geom import bbox_to_epsg, get_bbox, get_bbox_from_tif
+from eo_ml_pipeline.utils.geom import bbox_to_epsg, get_bbox, get_bbox_from_tif
 
 
 def test_get_bbox():

@@ -5,7 +5,7 @@ from pathlib import Path
 import rioxarray as rxr
 import xarray as xr
 
-from eo_pipeline.utils.io import save_xarray
+from eo_ml_pipeline.utils.io import save_xarray
 
 logger = logging.getLogger(__name__)
 
