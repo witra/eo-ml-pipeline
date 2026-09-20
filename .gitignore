@@ -1,5 +1,5 @@
 exploration/
-examples/dataset/
+reference_pipelines/dataset/
 .DS*
 data/
 airflow/dags/__pycache__/
