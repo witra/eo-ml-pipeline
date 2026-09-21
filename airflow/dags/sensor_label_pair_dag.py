@@ -24,6 +24,32 @@ from eo_ml_pipeline.utils.io import save_xarray
 logger = logging.getLogger(__name__)
 
 def _get_start_end_date(date_range:str, timezone:timezone):
+    """
+    Parse an ISO 8601 date range into timezone-aware datetimes.
+
+    Parameters
+    ----------
+    date_range : str
+        Date range in ``"start/end"`` format, where both dates are
+        ISO 8601-compatible strings.
+
+    timezone : datetime.timezone
+        Timezone to assign to the parsed datetime objects.
+
+    Returns
+    -------
+    start_date : datetime.datetime
+        Start of the requested date range.
+
+    end_date : datetime.datetime
+        End of the requested date range.
+
+    Examples
+    --------
+    >>> _get_start_end_date("2020-01-01/2021-01-01", timezone.utc)
+    (datetime.datetime(2020, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
+        datetime.datetime(2021, 1, 1, 0, 0, tzinfo=datetime.timezone.utc))
+    """
     start_date, end_date = (
         datetime.fromisoformat(date).replace(tzinfo=timezone)
         for date in date_range.split("/")
@@ -31,6 +57,30 @@ def _get_start_end_date(date_range:str, timezone:timezone):
     return start_date, end_date
 
 def _get_unit_info(unit: dict):
+    """
+    Extract processing information from a sensor-label work unit.
+
+    Parameters
+    ----------
+    unit : dict
+        Work-unit configuration containing the label path, sensor name,
+        and sensor-specific parameters. Expected keys are ``"y_path"``,
+        ``"sensor"``, and ``"sensor_params"``.
+
+    Returns
+    -------
+    y_name : str
+        Label basename derived from the label filename.
+
+    y_path : str
+        Path to the label GeoTIFF.
+
+    sensor : str
+        Sensor name.
+
+    sensor_params : dict
+        Sensor-specific processing parameters.
+    """
     y_path = unit["y_path"]
     sensor = unit["sensor"]
     sensor_params = unit["sensor_params"]
@@ -40,15 +90,47 @@ def _get_unit_info(unit: dict):
 
 @task
 def get_y_files() -> list[str]:
+    """
+    Find label GeoTIFF files configured for the DAG run.
+
+    The label directory is obtained from the Airflow ``y_dir`` parameter.
+
+    Returns
+    -------
+    list of str
+        Paths to the label GeoTIFF files found in the configured directory.
+    """
     context = get_current_context()
     y_dir = context["params"]["y_dir"]
-    paths = glob(f"{y_dir}/*.tif")[:2]
+    paths = glob(f"{y_dir}/*.tif")
     logger.info(os.getcwd())
     logger.info(f"Found {len(paths)} y files in {y_dir}")
     return paths
 
 @task
 def build_work_unit(y_paths: list[str]) -> list[dict]:
+    """
+    Build sensor-label processing work units.
+
+    A work unit represents one combination of a label file and a sensor.
+    Therefore, the total number of work units is the number of label files
+    multiplied by the number of configured sensors.
+
+    Parameters
+    ----------
+    y_paths : list of str
+        Paths to label GeoTIFF files.
+
+    Returns
+    -------
+    list of dict
+        Work-unit configurations. Each dictionary contains:
+
+        - ``work_id`` : Unique identifier for the work unit.
+        - ``y_path`` : Path to the label GeoTIFF.
+        - ``sensor`` : Sensor name.
+        - ``sensor_params`` : Sensor-specific processing parameters.
+    """
     params = get_current_context()["params"]
     sensors = params["sensors"]
     logger.info(f"sensors: {sensors}")
@@ -68,18 +150,49 @@ def build_work_unit(y_paths: list[str]) -> list[dict]:
 
 @task
 def search_stac_items(unit: dict) -> list[dict]:
+    """
+    Search and temporally sample STAC items for a processing unit.
+
+    The label bounding box is used to spatially constrain the STAC search.
+    Retrieved items are temporally sampled at seven-day intervals and saved
+    as a JSON file for the subsequent acquisition task.
+
+    Parameters
+    ----------
+    unit : dict
+        Sensor-label work unit containing the label path, sensor name,
+        and sensor parameters.
+
+    Returns
+    -------
+    dict
+        The updated work unit containing the path to the saved STAC item
+        records and a successful search status.
+
+    Raises
+    ------
+    AirflowSkipException
+        If no STAC items are found for the work unit.
+
+    Notes
+    -----
+    The STAC item metadata is stored under::
+
+        <save_dir>/items/<sensor>/<label_name>.json
+    """
     y_name, y_path, sensor, sensor_params = _get_unit_info(unit)
     bbox = get_bbox_from_tif(y_path)
     sensor_params["bbox"] = bbox
     items = search_items(sensor, **sensor_params)
     start_date, end_date = _get_start_end_date(sensor_params["datetime"], timezone.utc)
-    logger.info(f"{start_date}, {end_date}, {len(items)}")
+    logger.info(f"Search Date from {start_date} to {end_date}")
+    logger.info(f"initial num of items from: {len(items)}")
     items = temporal_sample_item(items, start_date, end_date, interval_day=7)
     if len(items)==0:
         raise AirflowSkipException(f"Skipping work unit of {y_name} with sensor {sensor} due to no items found")
     else:
         items = [item.to_dict()for item in items]
-        logger.info(f"{start_date}, {end_date}, {len(items)}")
+        logger.info(f"post sampling num of items: {len(items)}")
         items_path = Path(sensor_params["save_dir"]) / f"items/{sensor}/{y_name}.json"
         items_path.parent.mkdir(parents=True, exist_ok=True)
         items_path.write_text(json.dumps(items, indent=4))
@@ -92,6 +205,37 @@ def search_stac_items(unit: dict) -> list[dict]:
     retry_delay=timedelta(minutes=1),
     retry_exponential_backoff=False,)
 def acquire_stac_items(unit: dict) -> list[dict]:
+    """
+    Acquire the STAC items associated with a processing unit.
+
+    STAC item metadata is loaded from the JSON file generated by
+    :func:`search_stac_items`. Successfully acquired items are tracked in a
+    ``completed_items.json`` file, allowing interrupted tasks to resume
+    without re-acquiring completed items.
+
+    Parameters
+    ----------
+    unit : dict
+        Sensor-label work unit containing the STAC item metadata path and
+        sensor acquisition parameters.
+
+    Returns
+    -------
+    dict
+        The updated work unit containing paths to the acquired Zarr datasets.
+
+    Raises
+    ------
+    Exception
+        Re-raises an acquisition error after logging the failed item.
+        Airflow retries the task according to its retry configuration.
+
+    Notes
+    -----
+    Acquired datasets are stored under::
+
+        <save_dir>/interim/images/<sensor>/<sensor>_<label_name>/
+    """
     y_name, _, sensor, sensor_params = _get_unit_info(unit)
     items_path = Path(sensor_params["items_path"])
     items = [pystac.Item.from_dict(item) for item in json.loads(items_path.read_text())]
@@ -119,6 +263,36 @@ def acquire_stac_items(unit: dict) -> list[dict]:
 
 @task
 def concat_zarr(unit: dict) -> list[dict]:
+    """
+    Concatenate acquired sensor datasets along the time dimension.
+
+    Each acquired Zarr dataset is opened, assigned the appropriate CRS,
+    and reprojected to match the first dataset before temporal
+    concatenation.
+
+    Parameters
+    ----------
+    unit : dict
+        Sensor-label work unit containing acquired Zarr paths, bounding-box
+        information, and sensor parameters.
+
+    Returns
+    -------
+    dict
+        The updated work unit containing the path to the concatenated
+        Zarr dataset.
+
+    Raises
+    ------
+    AirflowSkipException
+        If no acquired Zarr datasets are available.
+
+    Notes
+    -----
+    The first dataset is used as the spatial reference for reprojection.
+    The concatenated dataset is stored under the sensor's interim image
+    directory.
+    """
     y_name, _, sensor, sensor_params = _get_unit_info(unit)
     zarr_paths = sensor_params["zarr_paths"]
     logger.info(f"{zarr_paths}")
@@ -150,7 +324,30 @@ def concat_zarr(unit: dict) -> list[dict]:
     return unit
 
 @task
-def preproces(unit: dict) -> list[dict]:
+def preprocess(unit: dict) -> list[dict]:
+    """
+    Apply preprocessing to a concatenated sensor dataset.
+
+    The concatenated Zarr dataset is opened, rechunked spatially, and passed
+    to the configured sensor preprocessing pipeline.
+
+    Parameters
+    ----------
+    unit : dict
+        Sensor-label work unit containing the concatenated Zarr path and
+        sensor-specific preprocessing parameters.
+
+    Returns
+    -------
+    dict
+        The updated work unit containing the path to the preprocessed
+        Zarr dataset.
+
+    Notes
+    -----
+    The preprocessed dataset is stored under the sensor's preprocessing
+    directory.
+    """
     y_name, _, sensor, sensor_params = _get_unit_info(unit)
     basename  = f"interim/images/{sensor}_preprocess/{sensor}_{y_name}"
     ds = xr.open_zarr(sensor_params["zarr_path"], consolidated=False)
@@ -166,6 +363,34 @@ def preproces(unit: dict) -> list[dict]:
 
 @task
 def construct_sensor_label_dataset(unit: dict):
+    """
+    Construct the final sensor-label (X-Y) dataset.
+
+    The preprocessed sensor dataset is loaded, assigned its CRS, rechunked,
+    and combined with the corresponding label GeoTIFF to create the final
+    paired dataset.
+
+    Parameters
+    ----------
+    unit : dict
+        Sensor-label work unit containing the preprocessed sensor dataset,
+        label path, and sensor-specific parameters.
+
+    Returns
+    -------
+    dict
+        The updated work unit containing the path to the final sensor-label
+        paired dataset.
+
+    Notes
+    -----
+    The resulting dataset is stored under::
+
+        <save_dir>/final/images/<sensor>_xy_pair/
+
+    The ``time`` chunk configuration is removed before constructing the
+    final X-Y dataset because the output is spatially paired with the label.
+    """
     y_name, y_path, sensor, sensor_params = _get_unit_info(unit)
     basename  = f"final/images/{sensor}_xy_pair/{sensor}_{y_name}"
     proj_epsg =  bbox_to_epsg(*sensor_params["bbox"])
@@ -182,12 +407,53 @@ def construct_sensor_label_dataset(unit: dict):
     logger.info(f"Saved xy pair zarr to {xy_pair_path}")
     return unit
 
+@dag(
+    dag_id="sensor_label_pair",
+    schedule=None,
+    catchup=False,
+    max_active_runs=1,
+    params={...},
+)
+
+
 @task_group
 def process_aoi(unit:dict): 
+    """
+    Build sensor-label datasets from label GeoTIFFs and satellite data.
+
+    The DAG creates one processing work unit for every combination of a
+    label GeoTIFF and configured sensor. Each work unit is processed through
+    the :func:`process_aoi` task group.
+
+    The workflow consists of:
+
+    1. Discovering label GeoTIFF files.
+    2. Creating label-sensor work units.
+    3. Searching and sampling STAC items.
+    4. Acquiring sensor data.
+    5. Concatenating acquired datasets.
+    6. Applying sensor-specific preprocessing.
+    7. Constructing sensor-label paired datasets.
+
+    DAG Parameters
+    --------------
+    y_dir : str
+        Directory containing label GeoTIFF files.
+
+    sensors : dict
+        Sensor configuration dictionary. Each sensor entry contains the
+        parameters required for STAC search, data acquisition, chunking,
+        preprocessing, and output generation.
+
+    Notes
+    -----
+    The DAG is manually triggered because ``schedule=None`` and does not
+    perform historical backfilling because ``catchup=False``.
+    """
     unit = search_stac_items(unit)
     unit = acquire_stac_items(unit)
     unit = concat_zarr(unit)
-    unit = preproces(unit)
+    unit = preprocess(unit)
     unit = construct_sensor_label_dataset(unit)
 
 @dag(
@@ -221,18 +487,37 @@ def process_aoi(unit:dict):
     }
 )
 def xy_builder():
-    # Tasks: 
-    # 1. Get the list of y files from y dir
-    # 2. Identify each sensor types and their corresponding paramteres
-    # 3. One work package consist of one y file and one sensor type. Hence, total number of works are num of y files * number of sensor
-    # 4. Work package consisting of the following steps:
-    # 4a. Search the available stac items
-    # 4b. Download the all available stac items (handling the failed items here)
-    # 4c. Preprocess the downloaded items
-    # 4d. construct the x and y pair dataset
-    # 5. Calculate the global mean and std for each sensor type
+    """
+    Build sensor-label datasets using a dynamically mapped workflow.
 
+    The DAG discovers label GeoTIFF files, creates one work unit for each
+    label-sensor combination, and processes each work unit through the
+    ``process_aoi`` task group.
+
+    The resulting workflow performs STAC search, sensor-data acquisition,
+    temporal concatenation, preprocessing, and sensor-label dataset
+    construction.
+
+    DAG Parameters
+    --------------
+    y_dir : str
+        Directory containing the label GeoTIFF files.
+
+    sensors : dict
+        Dictionary containing sensor names and their processing
+        configurations. Each sensor configuration defines parameters such
+        as the temporal search range, bands, STAC query, output directory,
+        spatial resolution, chunk sizes, and preprocessing options.
+
+    Notes
+    -----
+    The DAG uses dynamic task mapping to process each label-sensor
+    combination independently.
+
+    The number of work units is approximately:
+
+    ``number of label files × number of configured sensors``
+    """
     work_units = build_work_unit(get_y_files())
     process_aoi.expand(unit=work_units)
 xy_builder()
-
