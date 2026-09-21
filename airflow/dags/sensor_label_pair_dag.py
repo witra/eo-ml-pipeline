@@ -407,15 +407,6 @@ def construct_sensor_label_dataset(unit: dict):
     logger.info(f"Saved xy pair zarr to {xy_pair_path}")
     return unit
 
-@dag(
-    dag_id="sensor_label_pair",
-    schedule=None,
-    catchup=False,
-    max_active_runs=1,
-    params={...},
-)
-
-
 @task_group
 def process_aoi(unit:dict): 
     """
