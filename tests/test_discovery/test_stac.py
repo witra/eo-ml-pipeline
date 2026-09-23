@@ -19,14 +19,16 @@ def make_item(dt):
 def test_temporal_sample_item():
     """Select at most one item from each temporal window."""
 
-    start = datetime(2026, 1, 1)
-    end = datetime(2026, 1, 15)
+    start = datetime(2025, 12, 31)
+    end = datetime(2026, 1, 16)
 
     items = [
         make_item(datetime(2026, 1, 2)),
         make_item(datetime(2026, 1, 4)),
         make_item(datetime(2026, 1, 8)),
         make_item(datetime(2026, 1, 12)),
+        make_item(datetime(2026, 1, 15)),
+        make_item(datetime(2026, 1, 16)),
     ]
 
     result = temporal_sample_item(
@@ -39,6 +41,7 @@ def test_temporal_sample_item():
     assert [item.datetime for item in result] == [
         datetime(2026, 1, 2),
         datetime(2026, 1, 8),
+        datetime(2026, 1, 15)
     ]
 
 def test_temporal_sample_item_sampling_fn():

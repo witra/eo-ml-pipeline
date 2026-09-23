@@ -46,7 +46,7 @@ def temporal_sample_item(items:list[pystac.Item],
     selected = []
     current = start
     while current < end:
-        window_end = current + timedelta(days=interval_day)
+        window_end = min(current + timedelta(days=interval_day), end)
         candidates = [
             item
             for item in items 
