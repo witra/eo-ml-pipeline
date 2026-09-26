@@ -108,7 +108,7 @@ def search_s2(catalog="https://planetarycomputer.microsoft.com/api/stac/v1",
     catalog_pystac = pystac_client.Client.open(catalog)
     search = catalog_pystac.search(collections=[collection], **kwargs_search)
     items = search.item_collection()
-    logger.info(f"number of S2 scenes found of {kwargs['bbox']}: {len(items)}")
+    logger.info(f"number of S2 scenes found on {kwargs['bbox']}: {len(items)}")
     if len(items) > 0 and save_dir and basename:
         if save_dir.startswith("s3://"):
                 pass # TODO save to s3 bucket
