@@ -29,7 +29,7 @@ def save_xarray(ds, save_dir, filename, save_format='zarr', **kwargs):
         path = f'{save_dir}/{filename}.zarr'
         mode = kwargs.get("mode", "w")
         consolidated = kwargs.get("consolidated", True)
-        zarr_format = kwargs.get("zarr_format", 3)
+        zarr_format = kwargs.get("zarr_format", 2)
         encoding = kwargs.get("encoding", None)
         ds.to_zarr(path, mode=mode, consolidated=consolidated, zarr_format=zarr_format, encoding=encoding)
         return path
