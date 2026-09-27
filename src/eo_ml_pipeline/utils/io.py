@@ -35,7 +35,11 @@ def save_xarray(ds, save_dir, filename, save_format='zarr', **kwargs):
         return path
     elif save_format == 'tif':
         path = f'{save_dir}/{filename}.tif'
-        ds.rio.to_raster(path, driver="COG", compress="ZSTD", blocksize=512, overview_resampling="nearest")
+        driver = kwargs.get("driver", "COG")
+        compress = kwargs.get("compress", "ZSTD")
+        blocksize = kwargs.get("blocksize", 512)
+        overview_resampling = kwargs.get("overview_resampling", "nearest")
+        ds.rio.to_raster(path, driver=driver, compress=compress, blocksize=blocksize, overview_resampling=overview_resampling)
         return path
     else:
         logger.info(f'the save_format {save_format} is not available yet')
