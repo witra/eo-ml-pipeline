@@ -35,8 +35,7 @@ def acquire_s2_pc(bbox:tuple, items:list, save_dir:str, basename:str, **kwargs):
         ``items`` is empty.
     """
     proj_epsg =  bbox_to_epsg(*bbox)
-    kwargs["crs"] = f"epsg:{proj_epsg}"
-    added_keys = ["crs", ]
+    crs = f"epsg:{proj_epsg}"
     if not kwargs.get('bands'):
         kwargs['bands'] = [
                             "SCL", "B01", "B02", "B03",
@@ -52,9 +51,9 @@ def acquire_s2_pc(bbox:tuple, items:list, save_dir:str, basename:str, **kwargs):
         child_dir = basename.rsplit("/", 1)[0] if "/" in basename else ""
         os.makedirs(f"{save_dir}/{child_dir}", exist_ok=True)
         delete_path(f"{save_dir}/{basename}.zarr")
-    logger.info(f'Downloading {items}')
+    logger.info(f'Downloading {items} with bbox {bbox}')
     signed_items = [pc.sign(item) for item in items]
-    ds = stac_load(signed_items, groupby='id', **kwargs)
+    ds = stac_load(signed_items, bbox=bbox, groupby='id', crs=crs, **kwargs)
     ds = ds.rio.write_crs(f"epsg:{proj_epsg}", inplace=True)
     if kwargs.get("chunks", None) and not kwargs.get("encoding", None):
         kwargs["encoding"] = {var: {"chunks": (kwargs["chunks"]["x"], kwargs["chunks"]["y"])} 
@@ -62,8 +61,6 @@ def acquire_s2_pc(bbox:tuple, items:list, save_dir:str, basename:str, **kwargs):
                                     if "x" in ds[var].dims and "y" in ds[var].dims}
     zarr_path = save_xarray(ds, save_dir, basename, 'zarr', **kwargs)
     logger.info(f'Finished {items}')
-    for key in added_keys:
-        kwargs.pop(key)
     return ds, zarr_path
 
 def acquire_items(platform, **kwargs):

@@ -55,11 +55,11 @@ def temporal_sample_item(items:list[pystac.Item],
 
         if len(candidates) > 0:
             if sampling_fn:
-                sampled = sampling_fn(candidates)
+                sampled = sampling_fn(candidates) # return list of selected items
             else:
-                sampled = candidates[0]
+                sampled = [candidates[0], ]
 
-            selected.append(sampled)
+            selected.extend(sampled)
             
         current = window_end
     return selected
