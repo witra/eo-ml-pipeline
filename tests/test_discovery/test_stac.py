@@ -61,7 +61,7 @@ def test_temporal_sample_item_sampling_fn():
         start,
         end,
         interval_day=7,
-        sampling_fn=lambda candidates: candidates[-1],
+        sampling_fn=lambda candidates: [candidates[-1], ],
     )
 
     assert [item.datetime for item in result] == [
