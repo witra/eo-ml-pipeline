@@ -1,11 +1,11 @@
 import numpy as np
 import xarray as xr
 
-from eo_ml_pipeline.processing.preprocessing import (
+from eo_ml_pipeline.processing import (
     apply_cloud_mask_s2,
+    apply_preprocessing_s2_base,
     calculate_median_composite,
     scale_reflectance_s2,
-    apply_preprocessing_s2_base
 )
 
 
