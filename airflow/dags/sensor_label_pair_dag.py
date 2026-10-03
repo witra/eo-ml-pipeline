@@ -11,15 +11,12 @@ import xarray as xr
 from airflow.exceptions import AirflowSkipException
 from airflow.operators.python import get_current_context
 from airflow.sdk import Param, dag, task, task_group
-from annotated_types import Unit
-from zarr import config
 
-from eo_ml_pipeline.acquisition.stac import acquire_items
-from eo_ml_pipeline.dataset.base import construct_xy
-from eo_ml_pipeline.discovery.stac import search_items, temporal_sample_item
-from eo_ml_pipeline.processing.preprocessing import apply_preprocessing
-from eo_ml_pipeline.utils.geom import bbox_to_epsg, get_bbox_from_tif
-from eo_ml_pipeline.utils.io import save_xarray
+from eo_ml_pipeline.acquisition import acquire_items
+from eo_ml_pipeline.dataset import construct_xy
+from eo_ml_pipeline.discovery import search_items, temporal_sample_item
+from eo_ml_pipeline.processing import apply_preprocessing
+from eo_ml_pipeline.utils import bbox_to_epsg, get_bbox_from_tif, save_xarray
 
 logger = logging.getLogger(__name__)
 
