@@ -57,4 +57,4 @@ jobs:
           path: dist/
 
       - name: Test installation
-        run: bash scripts/test_install.sh
+        run: bash ./scripts/test_install.sh
