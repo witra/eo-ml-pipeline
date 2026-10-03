@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "A zarr-xarray-based earth observation data pipeline for generating ML-ready dataset with Airflow and AI-assisted orchestration"
 readme = "README.md"
 requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+  {name = "Tahjudil Witra", email = "tahjudil.witra@gmail.com"},
+]
 dependencies = [
     "geopandas>=1.1.4",
     "odc-stac>=0.5.3",
