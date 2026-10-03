@@ -19,7 +19,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest-cov>=7.1.0",
-    
+    "ruff>=0.16.10",
 ]
 orchestration = [
     "apache-airflow>=3.3.1"
