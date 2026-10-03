@@ -1,8 +1,7 @@
 import json
 import logging
 import os
-import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from glob import glob
 from pathlib import Path
 
@@ -11,15 +10,12 @@ import xarray as xr
 from airflow.exceptions import AirflowSkipException
 from airflow.operators.python import get_current_context
 from airflow.sdk import Param, dag, task, task_group
-from annotated_types import Unit
-from zarr import config
 
-from eo_ml_pipeline.acquisition.stac import acquire_items
-from eo_ml_pipeline.dataset.base import construct_xy
-from eo_ml_pipeline.discovery.stac import search_items, temporal_sample_item
-from eo_ml_pipeline.processing.preprocessing import apply_preprocessing
-from eo_ml_pipeline.utils.geom import bbox_to_epsg, get_bbox_from_tif
-from eo_ml_pipeline.utils.io import save_xarray
+from eo_ml_pipeline.acquisition import acquire_items
+from eo_ml_pipeline.dataset import construct_xy
+from eo_ml_pipeline.discovery import search_items, temporal_sample_item
+from eo_ml_pipeline.processing import apply_preprocessing
+from eo_ml_pipeline.utils import bbox_to_epsg, get_bbox_from_tif, save_xarray
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +180,7 @@ def search_stac_items(unit: dict) -> list[dict]:
     bbox = get_bbox_from_tif(y_path)
     sensor_params["bbox"] = bbox
     items = search_items(sensor, **sensor_params)
-    start_date, end_date = _get_start_end_date(sensor_params["datetime"], timezone.utc)
+    start_date, end_date = _get_start_end_date(sensor_params["datetime"], UTC)
     logger.info(f"Search Date from {start_date} to {end_date}")
     logger.info(f"initial num of items from: {len(items)}")
     items = temporal_sample_item(items, start_date, end_date, interval_day=7)

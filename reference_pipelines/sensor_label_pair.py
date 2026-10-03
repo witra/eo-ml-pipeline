@@ -7,12 +7,11 @@ from glob import glob
 import xarray as xr
 from tqdm import tqdm
 
-from eo_ml_pipeline.acquisition.stac import acquire_items
-from eo_ml_pipeline.dataset.base import construct_xy
-from eo_ml_pipeline.discovery.stac import search_items
-from eo_ml_pipeline.processing.preprocessing import apply_preprocessing
-from eo_ml_pipeline.utils.geom import get_bbox_from_tif
-from eo_ml_pipeline.utils.stats import calculate_mean_std
+from eo_ml_pipeline.acquisition import acquire_items
+from eo_ml_pipeline.dataset import construct_xy
+from eo_ml_pipeline.discovery import search_items
+from eo_ml_pipeline.processing import apply_preprocessing
+from eo_ml_pipeline.utils import calculate_mean_std, get_bbox_from_tif
 
 logging.basicConfig(
     level=logging.INFO,

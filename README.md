@@ -1,5 +1,6 @@
 # EO ML Pipeline
-Modular Earth Observation data pipeline for generating ML-ready dataset with Airflow and AI-assisted orchestration
+
+Modular Earth Observation data pipeline for generating ML-ready datasets with Airflow and AI-assisted orchestration.
 
 ## Installation
 
@@ -18,13 +19,7 @@ You can install the package directly from the GitHub repository:
 uv pip install "git+https://github.com/witra/eo-ml-pipeline"
 ```
 
-To install a specific branch:
-
-```bash
-uv pip install "git+https://github.com/witra/eo-ml-pipeline@main"
-```
-
-Or install a specific Git tag or commit:
+To install a specific Git tag or commit:
 
 ```bash
 uv pip install "git+https://github.com/witra/eo-ml-pipeline@v0.1.0"
@@ -38,15 +33,15 @@ If you are already using `uv` to manage your own project, you can add `eo-ml-pip
 uv add git+https://github.com/witra/eo-ml-pipeline
 ```
 
-This will add the Git repository as a dependency in your project's `pyproject.toml`.
+This adds the Git repository as a dependency in your project's `pyproject.toml`.
 
-You can then import the package normally:
+You can then import the package through its public API:
 
 ```python
-from eo_ml_pipeline.discovery.stac import search_items
-from eo_ml_pipeline.acquisition.stac import acquire_items
-from eo_ml_pipeline.processing.preprocessing import apply_preprocessing
-from eo_ml_pipeline.dataset.base import construct_xy
+from eo_ml_pipeline.discovery import search_items
+from eo_ml_pipeline.acquisition import acquire_items
+from eo_ml_pipeline.processing import apply_preprocessing
+from eo_ml_pipeline.dataset import construct_xy
 ```
 
 ### Install with pip
@@ -74,7 +69,7 @@ To work on the repository itself, clone the project and use `uv`:
 ```bash
 git clone https://github.com/witra/eo-ml-pipeline.git
 cd eo-ml-pipeline
-uv sync --dev
+uv sync
 ```
 
 The development environment is created automatically in `.venv` by `uv`. You can run commands inside the environment with `uv run`.
@@ -108,9 +103,15 @@ See [`reference_pipelines/`](./reference_pipelines/) for available pipelines and
 
 ## Airflow
 
-The project also provides Airflow-based workflow orchestration. Airflow is installed as part of the project's dependencies.
+The project also provides optional Airflow-based workflow orchestration. Airflow is **not required for the core package**.
 
-After setting up the development environment:
+To install the dependencies required for the Airflow workflows:
+
+```bash
+uv sync --group orchestration
+```
+
+After setting up the orchestration environment:
 
 ```bash
 uv run airflow standalone
@@ -118,4 +119,4 @@ uv run airflow standalone
 
 This starts a local Airflow instance for development and experimentation.
 
-See the `dags/` directory for example DAGs.
+See the `airflow/dags/` directory for example DAGs.

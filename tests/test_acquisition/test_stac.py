@@ -1,9 +1,11 @@
-import xarray as xr
 from datetime import datetime
-import pystac
-import numpy as np
 
-from eo_ml_pipeline.acquisition.stac import acquire_s2_pc, acquire_items
+import numpy as np
+import pystac
+import xarray as xr
+
+from eo_ml_pipeline.acquisition import acquire_items, acquire_s2_pc
+
 
 def make_item(dt):
     """Create a minimal STAC item for testing."""

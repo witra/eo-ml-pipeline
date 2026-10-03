@@ -1,9 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pystac
-import pytest
 
-from eo_ml_pipeline.discovery.stac import search_items, search_s2, temporal_sample_item
+from eo_ml_pipeline.discovery import search_items, search_s2, temporal_sample_item
 
 
 def make_item(dt):
