@@ -1,8 +1,7 @@
 import json
 import logging
 import os
-import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from glob import glob
 from pathlib import Path
 
@@ -181,7 +180,7 @@ def search_stac_items(unit: dict) -> list[dict]:
     bbox = get_bbox_from_tif(y_path)
     sensor_params["bbox"] = bbox
     items = search_items(sensor, **sensor_params)
-    start_date, end_date = _get_start_end_date(sensor_params["datetime"], timezone.utc)
+    start_date, end_date = _get_start_end_date(sensor_params["datetime"], UTC)
     logger.info(f"Search Date from {start_date} to {end_date}")
     logger.info(f"initial num of items from: {len(items)}")
     items = temporal_sample_item(items, start_date, end_date, interval_day=7)

@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from functools import partial
 from glob import glob
 from pathlib import Path
@@ -263,7 +263,7 @@ def search_stac_items(unit: dict) -> list[dict]:
     logger.info(f"item ids found for granule {granule}: ")
     for i, item in enumerate(items):
         logger.info(f"{i}, {item.id}")
-    start_date, end_date = _get_start_end_date(sensor_params["datetime"], timezone.utc)
+    start_date, end_date = _get_start_end_date(sensor_params["datetime"], UTC)
     items = temporal_sample_item(items, start_date, end_date, interval_day=interval_day, sampling_fn=partial(_sample_items, keyword=granule))
     
     logger.info(f"Search Date from {start_date} to {end_date}")
