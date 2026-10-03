@@ -1,11 +1,10 @@
 [project]
 name = "eo-ml-pipeline"
 version = "0.1.0"
-description = "Add your description here"
+description = "A zarr-xarray-based earth observation data pipeline for generating ML-ready dataset with Airflow and AI-assisted orchestration"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "apache-airflow[celery]>=3.3.1",
     "geopandas>=1.1.4",
     "odc-stac>=0.5.3",
     "planetary-computer>=1.0.0",
@@ -20,6 +19,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest-cov>=7.1.0",
+    
+]
+orchestration = [
+    "apache-airflow>=3.3.1"
 ]
 
 [build-system]
